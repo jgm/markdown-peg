@@ -1,0 +1,43 @@
+Markdown.hs - an implementation of markdown in Haskell, using a PEG grammar.
+(c) 2008 John MacFarlane, released under the GPL.
+
+Markdown is a plain-text syntax for writing HTML (and potentially other
+formats), by John Gruber (<http://daringfireball.net/projects/markdown/>).
+
+To build (using the GHC Haskell compiler):
+
+    ghc -O2 --make Markdown.hs
+
+or just:
+
+    make
+
+Markdown.hs uses John Meacham's Frisby PEG parsing library.  This can
+be found at <http://repetae.net/computer/frisby>, but for convenience
+the required files are included in this directory.  The XML formatting
+library from Pandoc (<http://johnmacfarlane.net/pandoc>).
+is also included for convenience.
+
+This is a first draft.  I'm sure there are many ways in which it can be
+improved. Currently it passes the Markdown 1.0.3 test suite, with the
+exception of two small corner cases.
+
+The grammar definition is the function 'doc' in Markdown.hs. It should
+be easy to change and extend it. If you want to add new block or
+inline elements, you'll also need to modify the definitions of 'Block'
+and 'Inline', and add clauses to handle these to 'inlineToHtml' and
+'blockToHtml'.
+
+There are a couple of features of markdown that cannot be handled
+straightforwardly in a PEG grammar; workarounds have been provided here.
+The first is the syntax for code spans: text enclosed by equal-sized
+sequences of backticks. I have simulated this by including separate
+rules for sequences of backticks of length 1 to 10, but this doesn't
+precisely capture the markdown rule. The second is the syntax for
+indented blocks, e.g. in block quotes and lists.  I have handled these
+by having the parser return unparsed markdown text for the block
+contents; the parser is then called again by the function 'blockToHtml'.
+
+See LICENSE for license information for Markdown.hs and the other included
+files.
+
