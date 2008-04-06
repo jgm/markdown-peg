@@ -273,13 +273,17 @@ inlineToHtml refs i =
     Emph xs             -> inTagsSimple "em" $ hcat $ map (inlineToHtml refs) xs
     Strong xs           -> inTagsSimple "strong" $ hcat $ map (inlineToHtml refs) xs
     Html s              -> P.text s
-    Link l (Src (u,"")) -> inTags False "a" [("href", u)] $ hcat $ map (inlineToHtml refs) l 
+    -- an autolink <http://google.com> or [explicit link](google.com) with no title
+    Link l (Src (u,"")) -> inTags False "a" [("href", u)] $ hcat $ map (inlineToHtml refs) l
+    -- an explicit link with a title:  [like this](google.com "title")
     Link l (Src (u,t))  -> inTags False "a" [("href", u), ("title", t)] $ hcat $ map (inlineToHtml refs) l 
+    -- a shortcut-style reference link:  [like this]
     Link l Null         -> case lookup l refs of
                                 Just (u, "") -> inTags False "a" [("href", u)] $ hcat $ map (inlineToHtml refs) l 
                                 Just (u, t) -> inTags False "a" [("href", u), ("title", t)] $ hcat $ 
                                                  map (inlineToHtml refs) l 
                                 Nothing     -> hcat $ map (inlineToHtml refs) $ [Text "["] ++ l ++ [Text "]"]
+    -- a regular reference link: [like][this] or [like] [this]
     Link l (Ref r s)    -> let r' = if null r then l else r 
                            in  case lookup r' refs of
                                  Just (u, "") -> inTags False "a" [("href", u)] $ hcat $ map (inlineToHtml refs) l 
