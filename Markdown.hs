@@ -128,13 +128,17 @@ doc = mdo
                       rawHtml // str // entity // special
 
   emph        <- newRule $ emphStar // emphUl
-  emphStar    <- newRule $ char '*' ->> many1 (strong // (doesNotMatch (char '*') ->> inline)) <<- char '*' ## Emph
-  emphUl      <- newRule $ char '_' ->> many1 (strong // (doesNotMatch (char '_') ->> inline)) <<- char '_' <<- 
+  oneStar     <- newRule $ char '*' <<- doesNotMatch oneStar
+  emphStar    <- newRule $ oneStar ->> many1 (strong // (doesNotMatch oneStar ->> inline)) <<- oneStar ## Emph
+  oneUl       <- newRule $ char '_' <<- doesNotMatch oneUl
+  emphUl      <- newRule $ oneUl ->> many1 (strong // (doesNotMatch oneUl ->> inline)) <<- oneUl <<-
                   doesNotMatch alphaNum ## Emph
 
   strong      <- newRule $ strongStar // strongUl
-  strongStar  <- newRule $ text "**" ->> many1 (doesNotMatch (text "**") ->> inline) <<- text "**" ## Strong
-  strongUl    <- newRule $ text "__" ->> many1 (doesNotMatch (text "__") ->> inline) <<- text "__" <<- 
+  twoStar     <- newRule $ text "**" <<- doesNotMatch twoStar
+  twoUl       <- newRule $ text "__" <<- doesNotMatch twoStar
+  strongStar  <- newRule $ twoStar ->> many1 (doesNotMatch twoStar ->> inline) <<- twoStar ## Strong
+  strongUl    <- newRule $ twoUl ->> many1 (doesNotMatch twoUl ->> inline) <<- twoUl <<-
                   doesNotMatch alphaNum ## Strong
   
   let ticks n        = text (replicate n '`') <<- doesNotMatch (char '`')
