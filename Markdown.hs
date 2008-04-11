@@ -315,9 +315,9 @@ blockToHtml :: [([Inline],(String, String))]  -- ^ list of link references
             -> Doc
 blockToHtml refs block =
   case block of
-    Para xs           -> inTagsSimple "p" $ wrap refs xs
-    Plain xs          -> wrap refs xs
-    Heading lev xs    -> inTagsSimple ("h" ++ show lev) $ hcat $ map (inlineToHtml refs) xs
+    Para xs           -> inTagsSimple "p" $ wrap refs $ lrstrip Space xs
+    Plain xs          -> wrap refs $ lrstrip Space xs
+    Heading lev xs    -> inTagsSimple ("h" ++ show lev) $ hcat $ map (inlineToHtml refs) $ lrstrip Space xs
     HorizontalRule    -> selfClosingTag "hr" []
     BlockQuote xs     -> inTagsIndented "blockquote" $ vcat $ map (blockToHtml refs) xs
     Verbatim s        -> inTagsSimple "pre" $ inTagsSimple "code" $ P.text $ escapeStringForXML s
