@@ -157,12 +157,13 @@ doc = mdo
                              text "#" <++> many1 digit // many1 alphaNum) <<- char ';' ## Entity 
 
   label          <- newRule $ char '[' ->> many (doesNotMatch (char ']') ->> inline) <<- char ']'
-  title          <- newRule $ char '"' ->> many (doesNotMatch (char '"' <> sp <> (text ")" // newline)) ->> 
+  title          <- newRule $ char '"' ->> many (doesNotMatch (char '"' <> sp <> (text ")" // newline)) ->>
                                doesNotMatch newline ->> anyChar) <<- char '"' //
-                               char '\'' ->> many (doesNotMatch (char '\'' <> sp <> (text ")" // newline)) ->> 
+                               char '\'' ->> many (doesNotMatch (char '\'' <> sp <> (text ")" // newline)) ->>
                                doesNotMatch newline ->> anyChar) <<- char '\''
-  source         <- newRule $ char '<' ->> many (noneOf ">") <<- char '>' //
-                               many (noneOf ")\n\t ")
+  source         <- newRule $ char '<' ->> source' <<- char '>' // source'
+  source'        <- newRule $ many (many1 (noneOf "()> \n\t") // (text "(" <++> source' <++> text ")") //
+                                      (text "<" <++> source' <++> text ">")) ## concat
   sourceAndTitle <- newRule $ char '(' ->> sp ->> source <<- spnl <> option "" title <<- sp <<- char ')'
   explicitLink   <- newRule $ label <> spnl ->> sourceAndTitle ## (\(l, s) -> Link l (Src s))
   autolinkUrl    <- newRule $ char '<' ->> many1 alpha <++> text "://" <++> 
