@@ -187,7 +187,7 @@ doc = mdo
   blockquote <- newRule $ many1 blockquoteLine <++> many blankline ## (\ls -> BlockQuote [Markdown $ concat ls ++ "\n"])
   
   let setextHeadingWith lev c = many1 (doesNotMatch endline ->> inline) <<- newline <<-
-                                text (replicate 3 c) <<- (many (char c)) <<- newline ## Heading lev 
+                                text (replicate 3 c) <<- (many (char c)) <<- newline ## Heading lev
   setextHeading <- newRule $ setextHeadingWith 1 '=' // setextHeadingWith 2 '-'
 
   let atxHeadingFor lev = text (replicate lev '#') ->> 
@@ -296,9 +296,18 @@ inlineToHtml refs i =
                                                   map (inlineToHtml refs) l 
                                  Nothing      -> hcat $ map (inlineToHtml refs) $ [Text "["] ++ l ++ 
                                                           [Text $ "]" ++ s ++ "["] ++ r ++ [Text "]"]
-    Image l (Src (u,t)) -> selfClosingTag "image" [("src", u), ("title", t), 
+    Image l (Src (u,t)) -> selfClosingTag "img" [("src", u), ("title", t), 
                                   ("alt", render $ hcat $ map (inlineToHtml refs) l)]
-    x                   -> error $ "I don't know how to turn this into HTML: " ++ show x
+    -- a shortcut-style reference link:  ![like this]
+    Image l Null        -> case lookup l refs of
+                                Just (u, t) -> inlineToHtml refs $ Image l (Src (u,t))
+                                Nothing     -> hcat $ map (inlineToHtml refs) $ [Text "!["] ++ l ++ [Text "]"]
+    -- a regular reference link: ![like][this] or ![like] [this]
+    Image l (Ref r s)   -> let r' = if null r then l else r 
+                           in  case lookup r' refs of
+                                 Just (u, t) -> inlineToHtml refs $ Image l (Src (u, t))
+                                 Nothing     -> hcat $ map (inlineToHtml refs) $ [Text "!["] ++ l ++ 
+                                                          [Text $ "]" ++ s ++ "["] ++ r ++ [Text "]"]
 
 -- | Convert block element to HTML.
 blockToHtml :: [([Inline],(String, String))]  -- ^ list of link references
@@ -332,7 +341,6 @@ blockToHtml refs block =
                                 else error $ "Parse failed at:  " ++ take 35 remaining
     Reference _ _     -> P.empty
     HtmlBlock s       -> P.text s
-    x                 -> error $ "I don't know how to turn this into HTML: " ++ show x
 
 --
 -- Wrapping code and other utilities from pandoc
