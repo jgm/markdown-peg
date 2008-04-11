@@ -22,7 +22,7 @@ main = do
   c <- if null argv
           then getContents
           else mapM readFile argv >>= return . unlines
-  let (blocks, remaining) = runPeg doc $ tabFilter tabStop c 
+  let (blocks, remaining) = runPeg doc $ tabFilter tabStop (c ++ "\n")
   if (not . null) remaining
      then error $ "Parse failed at:  " ++ take 35 remaining
      else do
