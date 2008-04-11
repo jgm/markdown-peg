@@ -143,7 +143,7 @@ doc = mdo
   
   let ticks n        = text (replicate n '`') <<- doesNotMatch (char '`')
   let betweenTicks n = ticks n ->> many1 (many1 (noneOf "`") // doesNotMatch (ticks n) ->> many1 (char '`')) <<- 
-                         ticks n ## lrstrip . concat
+                         ticks n ## lrstrip ' ' . concat
   code        <- newRule $ peek (char '`') ->> choice (map betweenTicks $ reverse [1..10]) ## Code
 
   rawHtml     <- newRule $ (htmlComment // htmlTag) ## Html
@@ -349,9 +349,9 @@ splitBy sep lst =
       rest'         = dropWhile (== sep) rest
   in  first:(splitBy sep rest')
 
--- | Strip leading and trailing spaces.
-lrstrip :: [Char] -> [Char]
-lrstrip = reverse . dropWhile (== ' ') . reverse . dropWhile (== ' ')
+-- | Strip leading and trailing elements.
+lrstrip :: (Eq a) => a -> [a] -> [a]
+lrstrip x = reverse . dropWhile (== x) . reverse . dropWhile (== x)
 
 tabStop :: Int
 tabStop = 4
