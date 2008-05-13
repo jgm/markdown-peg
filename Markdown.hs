@@ -215,11 +215,12 @@ doc = mdo
   bulletListLoose  <- newRule $ many1 ((bulletListItem <<- many blankline) ## (\s -> [Markdown $ s ++ "\n\n"])) ## 
                                  BulletList
   bulletListItem   <- newRule $ doesNotMatch horizontalRule ->> bullet ->> 
-                                  bulletListBlock <++> (many bulletListContinuationBlock ## concat)
-  bulletListBlock  <- newRule $ anyline <++> (many (doesNotMatch (optional indent ->> (bulletListItem // orderedListItem))
-                                  ->> doesNotMatch blankline ->> optionallyIndentedLine) ## concat)
-  bulletListContinuationBlock <- newRule $ ((many1 blankline ## concat) // unit "\0") <++> 
-                                   (many1 (indent ->> bulletListBlock) ## concat)
+                                  listBlock <++> (many listContinuationBlock ## concat)
+  listBlock        <- newRule $ anyline <++> (many (doesNotMatch (optional indent ->> (bulletListItem // orderedListItem))
+                                    ->> doesNotMatch blankline ->> doesNotMatch (indent ->> (bullet // enumerator)) ->>
+                                    optionallyIndentedLine) ## concat)
+  listContinuationBlock <- newRule $ ((many1 blankline ## concat) // unit "\0") <++>
+                                     (many1 (indent ->> listBlock) ## concat)
 
   enumerator       <- newRule $ nonindentSpace ->> many1 digit <<- char '.' <<- many1 spaceChar
   orderedList      <- newRule $ orderedListTight // orderedListLoose
@@ -227,13 +228,7 @@ doc = mdo
                                 doesNotMatch orderedListLoose ## OrderedList
   orderedListLoose <- newRule $ many1 ((orderedListItem <<- many blankline) ## (\s -> [Markdown $ s ++ "\n\n"])) ## 
                                 OrderedList
-  orderedListItem  <- newRule $ enumerator ->> 
-                      orderedListBlock <++> (many orderedListContinuationBlock ## concat)
-  orderedListBlock <- newRule $ anyline <++> (many (doesNotMatch (optional indent ->> (bulletListItem // orderedListItem))
-                                 ->> doesNotMatch blankline ->> doesNotMatch (indent ->> (enumerator // enumerator)) ->> 
-                                 optionallyIndentedLine) ## concat)
-  orderedListContinuationBlock <- newRule $ ((many1 blankline ## concat) // unit "\0") <++> 
-                                            (many1 (indent ->> orderedListBlock) ## concat)
+  orderedListItem  <- newRule $ enumerator ->> listBlock <++> (many listContinuationBlock ## concat)
 
 
   let htmlBlockOpening tag = text "<" <++> spnl <++> text tag <++> spnl <++> (many htmlAttribute ## concat)
