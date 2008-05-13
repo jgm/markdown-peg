@@ -129,17 +129,21 @@ doc = mdo
 
   emph        <- newRule $ emphStar // emphUl
   oneStar     <- newRule $ char '*' <<- doesNotMatch oneStar
-  emphStar    <- newRule $ oneStar ->> many1 (strong // (doesNotMatch oneStar ->> inline)) <<- oneStar ## Emph
+  emphStar    <- newRule $ oneStar ->> doesNotMatch spaceChar ->> doesNotMatch newline ->>
+                           many1 (strong // (doesNotMatch (spnl ->> oneStar) ->> inline)) <<- oneStar ## Emph
   oneUl       <- newRule $ char '_' <<- doesNotMatch oneUl
-  emphUl      <- newRule $ oneUl ->> many1 (strong // (doesNotMatch oneUl ->> inline)) <<- oneUl <<-
-                  doesNotMatch alphaNum ## Emph
+  emphUl      <- newRule $ oneUl ->> doesNotMatch spaceChar ->> doesNotMatch newline ->>
+                           many1 (strong // (doesNotMatch (spnl ->> oneUl) ->> inline)) <<- oneUl <<-
+                           doesNotMatch alphaNum ## Emph
 
   strong      <- newRule $ strongStar // strongUl
   twoStar     <- newRule $ text "**" <<- doesNotMatch twoStar
   twoUl       <- newRule $ text "__" <<- doesNotMatch twoStar
-  strongStar  <- newRule $ twoStar ->> many1 (doesNotMatch twoStar ->> inline) <<- twoStar ## Strong
-  strongUl    <- newRule $ twoUl ->> many1 (doesNotMatch twoUl ->> inline) <<- twoUl <<-
-                  doesNotMatch alphaNum ## Strong
+  strongStar  <- newRule $ twoStar ->> doesNotMatch spaceChar ->> doesNotMatch newline ->>
+                           many1 (doesNotMatch (spnl ->> twoStar) ->> inline) <<- twoStar ## Strong
+  strongUl    <- newRule $ twoUl ->> doesNotMatch spaceChar ->> doesNotMatch newline ->>
+                           many1 (doesNotMatch (spnl ->> twoUl) ->> inline) <<- twoUl <<-
+                           doesNotMatch alphaNum ## Strong
   
   let ticks n        = text (replicate n '`') <<- doesNotMatch (char '`')
   let betweenTicks n = ticks n ->> many1 (many1 (noneOf "`") // doesNotMatch (ticks n) ->> many1 (char '`')) <<- 
