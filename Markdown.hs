@@ -17,6 +17,7 @@ import System.Environment
 -- import System.IO.UTF8
 -- import Prelude hiding (getContents, putStrLn, readFile)
 
+main :: IO ()
 main = do
   argv <- getArgs
   c <- if null argv
@@ -118,13 +119,13 @@ doc = mdo
   quoted         <- newRule $ (text "\"" <++> many (noneOf "\"") <++> text "\"") // 
                               (text "'"  <++> many (noneOf "'") <++>  text "'")
   htmlAttribute  <- newRule $ many1 alphaNum <++> spnl <++> option "" (text "=" <++> spnl <++> 
-                                (quoted // many1 (doesNotMatch space ->> anyChar))) <++> spnl 
+                                (quoted // many1 (doesNotMatch spaces ->> anyChar))) <++> spnl
   htmlComment    <- newRule $ text "<!--" <++> many (doesNotMatch (text "-->") ->> anyChar) <++> text "-->"
   htmlTag        <- newRule $ text "<" <++> spnl <++> option "" (text "/") <++> many1 alphaNum <++>
                               spnl <++> (many htmlAttribute ## concat) <++> option "" (text "/") <++> text ">"
 
   -- inlines 
-  inline      <- newRule $ strong // emph // code // endline // space // link // image // autolink // 
+  inline      <- newRule $ strong // emph // code // endline // spaces // link // image // autolink //
                       rawHtml // str // entity // special
 
   emph        <- newRule $ emphStar // emphUl
@@ -154,7 +155,7 @@ doc = mdo
 
   str         <- newRule $ many1 normalChar ## Text
   special     <- newRule $ specialChar ## Text . (: [])
-  space       <- newRule $ many1 spaceChar ##> Space
+  spaces      <- newRule $ many1 spaceChar ##> Space
   endline     <- newRule $ optional (text " ") <> newline <> doesNotMatch blankline <> doesNotMatch eof ##> Space 
   linebreak   <- newRule $ text "  " ->> sp ->> endline ##> LineBreak
   entity      <- newRule $ char '&' ->> (text "#" <++> (text "x" // text "X") <++> many1 hexDigit // 
@@ -255,9 +256,9 @@ doc = mdo
                                 many1 (doesNotMatch spaceChar ->> doesNotMatch newline ->> anyChar) <> 
                                 spnl ->> option "" title <<- many blankline ## (\((l,s),t) -> Reference l (Src (s,t)))
 
-  -- doc - returns (block list, unparsed text)
-  doc            <- newRule $ (many (many blankline ->> block) <<- many blankline) <> rest <<- eof
-  return doc 
+  -- document - returns (block list, unparsed text)
+  document       <- newRule $ (many (many blankline ->> block) <<- many blankline) <> rest <<- eof
+  return document
 
 --
 -- Convert inlines and blocks to HTML
@@ -352,10 +353,10 @@ wrap refs lst = fsep $ map (hcat . map (inlineToHtml refs)) (splitBy Space lst)
 -- | Split list by groups of one or more sep.
 splitBy :: (Eq a) => a -> [a] -> [[a]]
 splitBy _ [] = []
-splitBy sep lst = 
-  let (first, rest) = break (== sep) lst
-      rest'         = dropWhile (== sep) rest
-  in  first:(splitBy sep rest')
+splitBy s lst =
+  let (x, xs) = break (== s) lst
+      xs'     = dropWhile (== s) xs
+  in  x:(splitBy s xs')
 
 -- | Strip leading and trailing elements.
 lrstrip :: (Eq a) => a -> [a] -> [a]
