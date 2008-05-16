@@ -189,7 +189,8 @@ doc = mdo
                             para // plain
   para       <- newRule $ many1 inline <<- newline <<- many1 blankline ## Para
   plain      <- newRule $ many1 inline <<- optional blankline ## Plain
-  blockquote <- newRule $ many1 blockquoteLine <++> many blankline ## (\ls -> BlockQuote [Markdown $ concat ls ++ "\n"])
+  blockquote <- newRule $ many1 (many1 blockquoteLine <++> many (doesNotMatch blankline ->> anyline) <++>
+                                 many blankline ## concat) ## (\ls -> BlockQuote [Markdown $ concat ls ++ "\n"])
   
   let setextHeadingWith lev c = many1 (doesNotMatch endline ->> inline) <<- newline <<-
                                 text (replicate 3 c) <<- (many (char c)) <<- newline ## Heading lev
